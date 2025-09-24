@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, Linking, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, Linking, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { colors, commonStyles, buttonStyles } from '../../styles/commonStyles';
@@ -9,6 +9,7 @@ import { useStorage } from '../../hooks/useStorage';
 import { mockItems } from '../../data/mockData';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
+import ImageViewer from '../../components/ImageViewer';
 
 export default function ItemDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -142,6 +143,12 @@ export default function ItemDetailScreen() {
           <Text style={styles.itemTitle}>{item.title}</Text>
           <Text style={styles.category}>{item.category}</Text>
         </View>
+
+        {item.imageUri && (
+          <View style={commonStyles.card}>
+            <ImageViewer imageUri={item.imageUri} />
+          </View>
+        )}
 
         <View style={commonStyles.card}>
           <Text style={styles.sectionTitle}>Description</Text>
@@ -283,5 +290,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 20,
     marginBottom: 40,
+  },
+  itemImage: {
+    width: '100%',
+    height: 250,
+    borderRadius: 12,
+    backgroundColor: colors.backgroundAlt,
   },
 });

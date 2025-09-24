@@ -11,6 +11,7 @@ export interface LostFoundItem {
   imageUri?: string;
   status: 'active' | 'resolved';
   createdAt: string;
+  userId?: string;
 }
 
 export interface User {
@@ -18,6 +19,7 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
+  password?: string;
 }
 
 export type TabType = 'lost' | 'found' | 'my-items';

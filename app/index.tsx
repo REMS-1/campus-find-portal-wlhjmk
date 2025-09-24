@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { colors, commonStyles, buttonStyles } from '../styles/commonStyles';
 import { LostFoundItem, TabType, FilterOptions } from '../types';
 import { useStorage } from '../hooks/useStorage';
+import { useAuth } from '../contexts/AuthContext';
 import { mockItems } from '../data/mockData';
 import ItemCard from '../components/ItemCard';
 import SearchBar from '../components/SearchBar';
@@ -27,6 +28,7 @@ export default function MainScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const { loadItems } = useStorage();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     loadAllItems();
@@ -57,7 +59,9 @@ export default function MainScreen() {
     let filtered = items;
 
     // Filter by tab type
-    if (activeTab !== 'my-items') {
+    if (activeTab === 'my-items') {
+      filtered = filtered.filter(item => item.userId === user?.id);
+    } else {
       filtered = filtered.filter(item => item.type === activeTab);
     }
 
@@ -128,11 +132,40 @@ export default function MainScreen() {
     <SafeAreaView style={commonStyles.container}>
       <View style={commonStyles.content}>
         {/* Header */}
-        <View style={{ marginBottom: 20 }}>
-          <Text style={commonStyles.title}>Lost & Found</Text>
-          <Text style={commonStyles.textSecondary}>
-            Help reunite people with their belongings
-          </Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={commonStyles.title}>Lost & Found</Text>
+            <Text style={commonStyles.textSecondary}>
+              {user ? `Welcome back, ${user.name}!` : 'Help reunite people with their belongings'}
+            </Text>
+          </View>
+          {user ? (
+            <TouchableOpacity
+              onPress={signOut}
+              style={{
+                backgroundColor: colors.backgroundAlt,
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 20,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+              }}
+            >
+              <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Sign Out</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={() => router.push('/auth/login')}
+              style={{
+                backgroundColor: colors.primary,
+                borderRadius: 20,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+              }}
+            >
+              <Text style={{ color: colors.backgroundAlt, fontSize: 12, fontWeight: '600' }}>Sign In</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Search Bar */}
@@ -167,7 +200,7 @@ export default function MainScreen() {
 
           <Button
             text="Report Item"
-            onPress={() => router.push('/report')}
+            onPress={() => user ? router.push('/report') : router.push('/auth/login')}
             style={[buttonStyles.primary, { flex: 1 }]}
             textStyle={{ color: colors.backgroundAlt }}
           />
@@ -191,14 +224,16 @@ export default function MainScreen() {
               Found
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[commonStyles.tab, activeTab === 'my-items' && commonStyles.activeTab]}
-            onPress={() => setActiveTab('my-items')}
-          >
-            <Text style={[commonStyles.tabText, activeTab === 'my-items' && commonStyles.activeTabText]}>
-              My Items
-            </Text>
-          </TouchableOpacity>
+          {user && (
+            <TouchableOpacity
+              style={[commonStyles.tab, activeTab === 'my-items' && commonStyles.activeTab]}
+              onPress={() => setActiveTab('my-items')}
+            >
+              <Text style={[commonStyles.tabText, activeTab === 'my-items' && commonStyles.activeTabText]}>
+                My Items
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Items List */}
@@ -229,7 +264,7 @@ export default function MainScreen() {
               {!searchQuery.trim() && (
                 <Button
                   text="Report an Item"
-                  onPress={() => router.push('/report')}
+                  onPress={() => user ? router.push('/report') : router.push('/auth/login')}
                   style={[buttonStyles.outline, { marginTop: 20 }]}
                   textStyle={{ color: colors.primary }}
                 />

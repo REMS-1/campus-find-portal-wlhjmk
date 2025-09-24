@@ -1,15 +1,17 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, ScrollView, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import { colors, commonStyles, buttonStyles } from '../styles/commonStyles';
 import { LostFoundItem } from '../types';
 import { useStorage } from '../hooks/useStorage';
+import { useAuth } from '../contexts/AuthContext';
 import { categories, locations } from '../data/mockData';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
+import ImageUpload from '../components/ImageUpload';
+import { showSuccessToast, showErrorToast } from '../utils/toast';
 
 export default function ReportScreen() {
   const [itemType, setItemType] = useState<'lost' | 'found'>('lost');
@@ -23,29 +25,22 @@ export default function ReportScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { addItem } = useStorage();
+  const { user } = useAuth();
 
-  const handleImagePicker = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setImageUri(result.assets[0].uri);
-        console.log('Image selected:', result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to pick image');
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user) {
+      router.replace('/auth/login');
     }
-  };
+  }, [user]);
+
+
+
+
 
   const handleSubmit = async () => {
     if (!title.trim() || !description.trim() || !contactInfo.trim()) {
-      Alert.alert('Error', 'Please fill in all required fields');
+      showErrorToast('Please fill in all required fields');
       return;
     }
 
@@ -64,23 +59,16 @@ export default function ReportScreen() {
         imageUri,
         status: 'active',
         createdAt: new Date().toISOString(),
+        userId: user?.id,
       };
 
       await addItem(newItem);
       
-      Alert.alert(
-        'Success',
-        `Your ${itemType} item has been reported successfully!`,
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ]
-      );
+      showSuccessToast(`Your ${itemType} item has been reported successfully!`);
+      router.back();
     } catch (error) {
       console.error('Error submitting item:', error);
-      Alert.alert('Error', 'Failed to submit item. Please try again.');
+      showErrorToast('Failed to submit item. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -202,12 +190,18 @@ export default function ReportScreen() {
             keyboardType="email-address"
           />
 
-          <TouchableOpacity style={styles.imageButton} onPress={handleImagePicker}>
-            <Icon name="camera" size={24} color={colors.primary} />
-            <Text style={styles.imageButtonText}>
-              {imageUri ? 'Change Photo' : 'Add Photo (Optional)'}
-            </Text>
-          </TouchableOpacity>
+          <Text style={styles.label}>Photo (Optional)</Text>
+          <ImageUpload
+            imageUri={imageUri}
+            onImageSelected={(uri) => {
+              setImageUri(uri);
+              console.log('Image uploaded successfully:', uri);
+            }}
+            onImageRemoved={() => {
+              setImageUri(undefined);
+              console.log('Image removed');
+            }}
+          />
 
           <Button
             text={isSubmitting ? 'Submitting...' : `Report ${itemType === 'lost' ? 'Lost' : 'Found'} Item`}
@@ -266,22 +260,5 @@ const styles = StyleSheet.create({
   activeCategoryChipText: {
     color: colors.backgroundAlt,
   },
-  imageButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.backgroundAlt,
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    paddingVertical: 20,
-    marginTop: 16,
-  },
-  imageButtonText: {
-    fontSize: 16,
-    color: colors.primary,
-    fontWeight: '500',
-    marginLeft: 8,
-  },
+
 });

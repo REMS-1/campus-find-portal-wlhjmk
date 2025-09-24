@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { colors, commonStyles } from '../styles/commonStyles';
 import { LostFoundItem } from '../types';
 import Icon from './Icon';
+import ImageViewer from './ImageViewer';
 
 interface ItemCardProps {
   item: LostFoundItem;
@@ -54,6 +55,13 @@ export default function ItemCard({ item, onPress }: ItemCardProps) {
 
       <Text style={styles.title}>{item.title}</Text>
       <Text style={styles.category}>{item.category}</Text>
+      
+      {item.imageUri && (
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: item.imageUri }} style={styles.itemImage} />
+        </View>
+      )}
+      
       <Text style={styles.description} numberOfLines={2}>
         {item.description}
       </Text>
@@ -136,5 +144,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '500',
+  },
+  imageContainer: {
+    marginBottom: 12,
+  },
+  itemImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 8,
+    backgroundColor: colors.backgroundAlt,
   },
 });
